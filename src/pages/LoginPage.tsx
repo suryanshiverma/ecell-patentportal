@@ -588,7 +588,7 @@ export const LoginPage: React.FC = () => {
                 <div style={S.usernameRow}>
                   <input
                     type="text"
-                    placeholder="e.g. aditya.sharma"
+                    placeholder=""
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required

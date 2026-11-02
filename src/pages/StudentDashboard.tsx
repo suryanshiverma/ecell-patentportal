@@ -113,9 +113,6 @@ export const StudentDashboard: React.FC = () => {
             >
               Applicant Workspace
             </span>
-            <span style={{ fontSize: '0.85rem', color: '#6385B2', fontWeight: 500 }}>
-              {currentUser?.department || INSTITUTION.DEPARTMENTS.CSE}
-            </span>
           </div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.025em', color: '#152E5A' }}>
             Welcome, {currentUser?.full_name}
