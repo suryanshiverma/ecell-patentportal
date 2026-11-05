@@ -28,6 +28,7 @@ const STORAGE_PREFIX = 'muj_patent_portal_';
 export const MAX_DOCUMENT_SIZE_BYTES = SECURITY_RULES.MAX_FILE_SIZE_BYTES;
 
 // Allowed MIME types
+export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
 export const ALLOWED_DOCUMENT_MIMES = [
   ...SECURITY_RULES.ALLOWED_MIME_TYPES,
   'application/msword',
@@ -1631,8 +1632,18 @@ export async function uploadDocument(
     );
   }
 
+  // 3. File extension validation
+  const ext = ('.' + (file.name.split('.').pop() || '')).toLowerCase();
+  if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(ext)) {
+    throw new Error(
+      `Unsupported file extension (${ext}). Permitted extensions: ${ALLOWED_DOCUMENT_EXTENSIONS.join(', ')}`
+    );
+  }
+
   // Safe filename sanitization
-  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || 'doc';
+  const safeBase = baseName.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
+  const safeFilename = `${safeBase}${ext}`;
   const storagePath = `${applicationId}/${Date.now()}_${safeFilename}`;
   const now = new Date().toISOString();
 

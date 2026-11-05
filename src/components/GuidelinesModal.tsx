@@ -34,6 +34,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({ isOpen, onClos
             </div>
           </div>
           <button
+type="button"
             onClick={onClose}
             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors"
           >
@@ -104,6 +105,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({ isOpen, onClos
         {/* Footer */}
         <div className="p-4 bg-[#FAF7EE] border-t border-[#EBE5D5] flex justify-end">
           <button
+type="button"
             onClick={onClose}
             className="px-6 py-2.5 bg-[#204E96] hover:bg-[#183E78] text-white font-semibold text-xs rounded-full transition-colors shadow-sm"
           >

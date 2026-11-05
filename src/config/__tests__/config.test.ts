@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ENV } from '../env';
+import { ENV, validateEnvironment } from '../env';
 import {
   INSTITUTION,
   COORDINATOR,
@@ -28,6 +28,26 @@ describe('Centralized Configuration & Environment Architecture', () => {
       expect(ENV.SUPABASE_URL).toBeDefined();
       expect(ENV.STORAGE_BUCKET_DOCS).toBe('patent-documents');
       expect(ENV.STORAGE_BUCKET_DRAWINGS).toBe('patent-drawings');
+    });
+
+    it('should validate environment and fail fast in production if required variables are missing', () => {
+      expect(validateEnvironment(ENV).valid).toBe(true);
+
+      const prodEnvWithPlaceholders = {
+        ...ENV,
+        APP_ENV: 'production' as const,
+        SUPABASE_URL: 'https://mock-instance.supabase.co',
+      };
+      expect(() => validateEnvironment(prodEnvWithPlaceholders)).toThrow(/Production startup failure/);
+
+      const prodEnvValid = {
+        ...ENV,
+        APP_ENV: 'production' as const,
+        SUPABASE_URL: 'https://real-project.supabase.co',
+        SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.validkey',
+        PORTAL_BASE_URL: 'https://patents.muj.manipal.edu',
+      };
+      expect(validateEnvironment(prodEnvValid).valid).toBe(true);
     });
   });
 

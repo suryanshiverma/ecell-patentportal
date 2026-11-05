@@ -169,8 +169,16 @@ export const LoginPage: React.FC = () => {
       setErr('Passwords do not match.');
       return;
     }
-    if (regPwd.length < 6) {
-      setErr('Password must be at least 6 characters.');
+    if (regPwd.length < 8) {
+      setErr('Password must be at least 8 characters.');
+      return;
+    }
+    if (!/[a-zA-Z]/.test(regPwd) || !/[0-9]/.test(regPwd)) {
+      setErr('Password must include both letters and numbers.');
+      return;
+    }
+    if (regName.trim().length > 0 && regName.trim().length < 2) {
+      setErr('Full name must be at least 2 characters.');
       return;
     }
     if (captchaMissing()) return;

@@ -4,7 +4,6 @@ import { useAuth } from '../features/auth/AuthContext';
 import { fetchApplications, fetchNotifications } from '../lib/api';
 import type { Application, InPortalNotification } from '../types/database.types';
 import { getStatusBadgeClass, getStatusDisplayName } from '../features/applications/workflow';
-import { INSTITUTION } from '../config/constants';
 import {
   PlusCircle,
   FileText,

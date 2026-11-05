@@ -228,11 +228,28 @@ UPDATE profiles SET role = 'super_admin' WHERE university_email = '<it admin ema
 
 The test suite is built on Vitest and covers validation schemas, workflow state transitions, API data operations, and security attack vectors.
 
-### Running Automated Tests:
+### Running Automated Tests & Security Verification:
 ```bash
-npm test          # frontend (Vitest)
-npm run test:db   # database security and workflow checks against the real migrations (in-memory Postgres)
+npm test          # frontend & security unit tests (Vitest)
+npm run test:db   # database RLS, security triggers, and workflow checks (PGlite)
+npm run build     # TypeScript compilation and production bundle verification
+npm audit         # dependency security vulnerability audit
 ```
+
+### Continuous Integration (CI):
+Automated CI is configured via GitHub Actions in `.github/workflows/ci.yml` executing on every push and pull request:
+- `npm audit --audit-level=high` (dependency security audit)
+- `npm run build` (strict TypeScript compilation and Rollup vendor code-splitting verification)
+- `npm test` (Vitest unit and render test suite)
+- `npm run test:db` (PGlite database migration, security trigger, and RLS policy verification)
+
+### Hardened Security Controls (OWASP ASVS & DPDP Aligned):
+1. **Password Policy**: Enforces minimum 8 characters with required alphanumeric mix (letters and digits).
+2. **File Upload Hardening**: Dual-tier validation checking both MIME type and strict file extension allowlist (`.pdf`, `.doc`, `.docx`, `.png`, `.jpg`, `.jpeg`) with base name sanitization preventing path traversal and executable masquerading.
+3. **HTTP Security Headers & CSP**: Embedded Content Security Policy (`CSP`), `X-Content-Type-Options: nosniff`, and `Referrer-Policy: strict-origin-when-cross-origin` blocking unauthorized script injection and MIME sniffing.
+4. **Edge Function Token Verification**: Edge functions (`send-notification`, `reset-authenticator`) strictly verify JWT authentication tokens against Supabase Auth before processing, with scoped CORS headers restricting access to official university origins.
+5. **Separation of Duties & Confidentiality Shield**: Super admin oversight functions (`get_pipeline_overview`) are barred from inspecting confidential invention disclosures or claims text.
+6. **Rate Limiting & Anti-Enumeration**: Client feedback countdown on auth rate limits, generic verification/recovery messages preventing account enumeration, and Cloudflare Turnstile bot verification.
 
 ### Test Coverage Highlights:
 1. **Schema Validation (`src/test/schemas.test.ts`)**:

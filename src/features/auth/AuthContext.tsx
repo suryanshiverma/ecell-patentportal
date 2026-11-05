@@ -220,8 +220,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isAllowedUniversityEmail(normalizedEmail)) {
         return { error: SECURITY_RULES.RESTRICTED_EMAIL_ERROR };
       }
-      if (!details.password || details.password.length < 6) {
-        return { error: 'Password must be at least 6 characters in length.' };
+      if (!details.password || details.password.length < 8) {
+        return { error: 'Password must be at least 8 characters in length.' };
+      }
+      if (!/[a-zA-Z]/.test(details.password) || !/[0-9]/.test(details.password)) {
+        return { error: 'Password must include both letters and numbers.' };
       }
       if (!details.fullName || details.fullName.trim().length < 2) {
         return { error: 'Please enter your full legal name as registered in university records.' };

@@ -4,6 +4,7 @@
 // ==============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 interface NotificationPayload {
   recipient_email: string;
@@ -21,23 +22,63 @@ interface NotificationPayload {
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const PORTAL_BASE_URL = Deno.env.get("PORTAL_BASE_URL") || "https://patents.muj.manipal.edu";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 serve(async (req: Request) => {
   // 1. Verify Request Method & Auth
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": PORTAL_BASE_URL,
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+    });
+  }
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
   }
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const isServiceRole = SUPABASE_SERVICE_ROLE_KEY && token === SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!isServiceRole) {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: { user }, error: userError } = await authClient.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized: Invalid or expired token" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } else if (token.length < 20) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Invalid token format" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
 
   try {
     const payload: NotificationPayload = await req.json();
 
     // 2. Validate Domain of Recipient
-    if (!payload.recipient_email.toLowerCase().endsWith("@muj.manipal.edu")) {
+    if (!payload.recipient_email || !payload.recipient_email.toLowerCase().endsWith("@muj.manipal.edu")) {
       return new Response(JSON.stringify({ error: "Recipient email must be @muj.manipal.edu" }), { status: 400 });
     }
 

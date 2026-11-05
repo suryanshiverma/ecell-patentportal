@@ -100,6 +100,19 @@ describe('Security & Access Control Tests', () => {
     ).rejects.toThrow(/Unsupported file type/);
   });
 
+  it('rejects spoofed file extensions even with permitted MIME types', async () => {
+    const student = { id: 'student-uploader', role: 'student' as const };
+    const app = await saveDraftApplication({ title: 'App with spoofed file' }, [], student.id);
+
+    const spoofedFile = new File(['<html><script>alert(1)</script></html>'], 'exploit.html', {
+      type: 'application/pdf',
+    });
+
+    await expect(
+      uploadDocument(app.id, spoofedFile, 'complete_specification', student.id)
+    ).rejects.toThrow(/Unsupported file extension/);
+  });
+
   it('prevents illegal state transitions outside permitted state machine', () => {
     // Draft directly to resubmitted without prior review or corrections
     expect(canTransition('draft', 'resubmitted', 'student')).toBe(false);

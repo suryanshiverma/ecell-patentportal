@@ -14,15 +14,28 @@ const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUP
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const PORTAL_BASE_URL = Deno.env.get("PORTAL_BASE_URL") ?? "https://patents.muj.manipal.edu";
 
-const json = (status: number, body: unknown) =>
-  new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin");
+  const isAllowed =
+    origin === PORTAL_BASE_URL ||
+    origin === "http://localhost:5173" ||
+    origin === "http://localhost:3000" ||
+    (origin && origin.endsWith(".manipal.edu"));
+
+  return {
+    "Access-Control-Allow-Origin": isAllowed && origin ? origin : PORTAL_BASE_URL,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 Deno.serve(async (req) => {
+  const cors = getCorsHeaders(req);
+  const json = (status: number, body: unknown) =>
+    new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json(405, { error: "Method not allowed" });
 

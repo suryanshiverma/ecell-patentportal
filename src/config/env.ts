@@ -1,6 +1,7 @@
 /**
  * Application Environment Configuration
- * Centralized access to Vite environment variables with type safety and fallback defaults.
+ * Centralized access to Vite environment variables with type safety, fallback defaults,
+ * and fail-fast production startup validation.
  */
 
 export const ENV = {
@@ -23,3 +24,31 @@ export const ENV = {
 } as const;
 
 export type AppEnvironment = typeof ENV;
+
+/**
+ * Validate that mandatory environment configuration is present in production environments.
+ * Throws a fatal configuration error to fail fast if critical production configuration is missing.
+ */
+export function validateEnvironment(env: typeof ENV = ENV): { valid: boolean; missing: string[] } {
+  const missing: string[] = [];
+  if (env.APP_ENV === 'production') {
+    if (!env.SUPABASE_URL || env.SUPABASE_URL.includes('mock-instance') || env.SUPABASE_URL.includes('placeholder')) {
+      missing.push('VITE_SUPABASE_URL');
+    }
+    if (!env.SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY === 'mock-key' || env.SUPABASE_ANON_KEY.includes('placeholder')) {
+      missing.push('VITE_SUPABASE_ANON_KEY');
+    }
+    if (!env.PORTAL_BASE_URL) {
+      missing.push('VITE_PORTAL_BASE_URL');
+    }
+    if (missing.length > 0) {
+      const errMessage = `[SECURITY FATAL] Production startup failure: Missing or placeholder environment variables: ${missing.join(', ')}. Populate these variables in your deployment environment.`;
+      console.error(errMessage);
+      throw new Error(errMessage);
+    }
+  }
+  return { valid: true, missing };
+}
+
+// Execute startup validation on import
+validateEnvironment();
