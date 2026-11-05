@@ -64,3 +64,5 @@ Thumbs.db
 # Local tool caches
 .impeccable/hook.cache.json
 scratch/
+
+.vercel
