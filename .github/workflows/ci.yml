@@ -40,7 +40,7 @@ jobs:
         run: npm run build
 
       - name: Run Vitest unit & integration tests
-        run: npm test -- --reporter=verbose
+        run: npm test
 
       - name: Run database & RLS security tests
         run: npm run test:db
