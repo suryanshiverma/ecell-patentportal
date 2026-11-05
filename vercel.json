@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon\\.ico|robots\\.txt|.*\\..*).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -19,7 +19,7 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
+          "value": "DENY"
         },
         {
           "key": "Referrer-Policy",
