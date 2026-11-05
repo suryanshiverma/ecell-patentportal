@@ -4,6 +4,16 @@
  * and fail-fast production startup validation.
  */
 
+const isLiveSupabase = Boolean(
+  typeof import.meta !== 'undefined' &&
+  import.meta.env?.VITE_SUPABASE_URL &&
+  !String(import.meta.env.VITE_SUPABASE_URL).includes('mock-instance') &&
+  !String(import.meta.env.VITE_SUPABASE_URL).includes('placeholder') &&
+  import.meta.env?.VITE_SUPABASE_ANON_KEY &&
+  import.meta.env.VITE_SUPABASE_ANON_KEY !== 'mock-key' &&
+  !String(import.meta.env.VITE_SUPABASE_ANON_KEY).includes('placeholder')
+);
+
 export const ENV = {
   SUPABASE_URL: (import.meta.env.VITE_SUPABASE_URL as string) || 'https://mock-instance.supabase.co',
   SUPABASE_ANON_KEY: (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || 'mock-key',
@@ -18,7 +28,7 @@ export const ENV = {
   ALLOWED_EMAIL_DOMAIN: (import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN as string) || 'muj.manipal.edu',
   STORAGE_BUCKET_DOCS: (import.meta.env.VITE_STORAGE_BUCKET_DOCS as string) || 'patent-documents',
   STORAGE_BUCKET_DRAWINGS: (import.meta.env.VITE_STORAGE_BUCKET_DRAWINGS as string) || 'patent-drawings',
-  APP_ENV: (import.meta.env.VITE_APP_ENV as string) || (import.meta.env.MODE as string) || 'development',
+  APP_ENV: (import.meta.env.VITE_APP_ENV as string) || (isLiveSupabase ? 'production' : 'development'),
   // Public Cloudflare Turnstile site key; empty disables the widget (local dev, demo mode)
   TURNSTILE_SITE_KEY: (import.meta.env.VITE_TURNSTILE_SITE_KEY as string) || '',
 } as const;
@@ -50,5 +60,16 @@ export function validateEnvironment(env: typeof ENV = ENV): { valid: boolean; mi
   return { valid: true, missing };
 }
 
-// Execute startup validation on import
-validateEnvironment();
+// Log operational mode on initialization
+if (typeof console !== 'undefined') {
+  if (isLiveSupabase) {
+    try {
+      validateEnvironment();
+      console.info('[PORTAL] Production Supabase environment verified.');
+    } catch (err) {
+      console.error(err);
+    }
+  } else {
+    console.info('[PORTAL] Running in Institutional Demo Mode (Offline/Local Storage). To connect to live Supabase, configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  }
+}
